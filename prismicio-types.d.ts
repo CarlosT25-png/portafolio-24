@@ -69,7 +69,10 @@ export type HomepageDocument<Lang extends string = string> =
     Lang
   >;
 
-type PageDocumentDataSlicesSlice = TechListSlice | BiographySlice;
+type PageDocumentDataSlicesSlice =
+  | ContentDirectorySlice
+  | TechListSlice
+  | BiographySlice;
 
 /**
  * Content for Page documents
@@ -375,6 +378,91 @@ export type BiographySlice = prismic.SharedSlice<
 >;
 
 /**
+ * Primary content in *ContentDirectory → Primary*
+ */
+export interface ContentDirectorySliceDefaultPrimary {
+  /**
+   * Heading field in *ContentDirectory → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: content_directory.primary.heading
+   * - **Documentation**: https://prismic.io/docs/field#key-text
+   */
+  heading: prismic.KeyTextField;
+
+  /**
+   * Content Type field in *ContentDirectory → Primary*
+   *
+   * - **Field Type**: Select
+   * - **Placeholder**: *None*
+   * - **API ID Path**: content_directory.primary.content_type
+   * - **Documentation**: https://prismic.io/docs/field#select
+   */
+  content_type: prismic.SelectField<"Blog" | "Project">;
+
+  /**
+   * Description field in *ContentDirectory → Primary*
+   *
+   * - **Field Type**: Rich Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: content_directory.primary.description
+   * - **Documentation**: https://prismic.io/docs/field#rich-text-title
+   */
+  description: prismic.RichTextField;
+
+  /**
+   * View More Text field in *ContentDirectory → Primary*
+   *
+   * - **Field Type**: Text
+   * - **Placeholder**: *None*
+   * - **API ID Path**: content_directory.primary.view_more_text
+   * - **Documentation**: https://prismic.io/docs/field#key-text
+   */
+  view_more_text: prismic.KeyTextField;
+
+  /**
+   * Fallback Item Image field in *ContentDirectory → Primary*
+   *
+   * - **Field Type**: Image
+   * - **Placeholder**: *None*
+   * - **API ID Path**: content_directory.primary.fallback_item_image
+   * - **Documentation**: https://prismic.io/docs/field#image
+   */
+  fallback_item_image: prismic.ImageField<never>;
+}
+
+/**
+ * Default variation for ContentDirectory Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Default
+ * - **Documentation**: https://prismic.io/docs/slice
+ */
+export type ContentDirectorySliceDefault = prismic.SharedSliceVariation<
+  "default",
+  Simplify<ContentDirectorySliceDefaultPrimary>,
+  never
+>;
+
+/**
+ * Slice variation for *ContentDirectory*
+ */
+type ContentDirectorySliceVariation = ContentDirectorySliceDefault;
+
+/**
+ * ContentDirectory Shared Slice
+ *
+ * - **API ID**: `content_directory`
+ * - **Description**: ContentDirectory
+ * - **Documentation**: https://prismic.io/docs/slice
+ */
+export type ContentDirectorySlice = prismic.SharedSlice<
+  "content_directory",
+  ContentDirectorySliceVariation
+>;
+
+/**
  * Primary content in *Hero → Primary*
  */
 export interface HeroSliceDefaultPrimary {
@@ -530,6 +618,10 @@ declare module "@prismicio/client" {
       BiographySliceDefaultPrimary,
       BiographySliceVariation,
       BiographySliceDefault,
+      ContentDirectorySlice,
+      ContentDirectorySliceDefaultPrimary,
+      ContentDirectorySliceVariation,
+      ContentDirectorySliceDefault,
       HeroSlice,
       HeroSliceDefaultPrimary,
       HeroSliceVariation,
