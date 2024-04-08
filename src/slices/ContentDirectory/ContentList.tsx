@@ -1,10 +1,13 @@
 "use client";
 
-import { Content, asImageSrc, isFilled } from "@prismicio/client";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { MdArrowOutward } from "react-icons/md";
+import React, { useRef, useState, useEffect } from "react";
+import { asImageSrc, isFilled } from "@prismicio/client";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MdArrowOutward } from "react-icons/md";
+import { Content } from "@prismicio/client";
+
+gsap.registerPlugin(ScrollTrigger);
 
 type ContentListProps = {
   items: Content.BlogPostDocument[] | Content.ProjectDocument[];
@@ -13,125 +16,168 @@ type ContentListProps = {
   viewMoreText: Content.ContentDirectorySlice["primary"]["view_more_text"];
 };
 
-const ContentList = ({
+export default function ContentList({
   items,
   contentType,
   fallbackItemImage,
   viewMoreText = "Read More",
-}: ContentListProps) => {
+}: ContentListProps) {
   const component = useRef(null);
+  const itemsRef = useRef<Array<HTMLLIElement | null>>([]);
+
   const revealRef = useRef(null);
-  const lastMousePos = useRef({ x: 0, y: 0})
-
   const [currentItem, setCurrentItem] = useState<null | number>(null);
+  const [hovering, setHovering] = useState(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
-  const urlPrefixes = contentType === "Blog" ? "/ blog" : "/project";
+  const urlPrefix = contentType === "Blog" ? "/blog" : "/project";
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const mousePos = {x: e.clientX, y: e.clientY + window.scrollY }
+    // Animate list-items in with a stagger
+    let ctx = gsap.context(() => {
+      itemsRef.current.forEach((item, index) => {
+        gsap.fromTo(
+          item,
+          {
+            opacity: 0,
+            y: 20,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.3,
+            ease: "elastic.out(1,0.3)",
+            stagger: 0.2,
+            scrollTrigger: {
+              trigger: item,
+              start: "top bottom-=100px",
+              end: "bottom center",
+              toggleActions: "play none none none",
+            },
+          },
+        );
+      });
 
+      return () => ctx.revert(); // cleanup!
+    }, component);
+  }, []);
+
+  useEffect(() => {
+    // Mouse move event listener
+    const handleMouseMove = (e: MouseEvent) => {
+      const mousePos = { x: e.clientX, y: e.clientY + window.scrollY };
       // Calculate speed and direction
-      const speed = Math.sqrt(Math.pow(mousePos.x - lastMousePos.current.x, 2))
+      const speed = Math.sqrt(Math.pow(mousePos.x - lastMousePos.current.x, 2));
 
       let ctx = gsap.context(() => {
-        if(currentItem !== null){
-          const maxY = window.scrollY + window.innerHeight - 350
-          const maxX = window.innerWidth - 250
+        // Animate the image holder
+        if (currentItem !== null) {
+          const maxY = window.scrollY + window.innerHeight - 350;
+          const maxX = window.innerWidth - 250;
 
           gsap.to(revealRef.current, {
             x: gsap.utils.clamp(0, maxX, mousePos.x - 110),
             y: gsap.utils.clamp(0, maxY, mousePos.y - 160),
-            rotation: speed * (mousePos.x > lastMousePos.current.x ? 1 : -1),
-            ease: 'back.out(2)',
-            duration: 1.3
-          })
+            rotation: speed * (mousePos.x > lastMousePos.current.x ? 1 : -1), // Apply rotation based on speed and direction
+            ease: "back.out(2)",
+            duration: 1.3,
+          });
+          gsap.to(revealRef.current, {
+            opacity: hovering ? 1 : 0,
+            visibility: "visible",
+            ease: "power3.out",
+            duration: 0.4,
+          });
         }
-        lastMousePos.current = mousePos
-        return () => ctx.revert()
-      }, component)
-    }
+        lastMousePos.current = mousePos;
+        return () => ctx.revert(); // cleanup!
+      }, component);
+    };
 
-    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-    }
-  }, [currentItem])
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [hovering, currentItem]);
 
+  const onMouseEnter = (index: number) => {
+    setCurrentItem(index);
+    if (!hovering) setHovering(true);
+  };
 
-  const contentImages = items.map((item, idx) => {
+  const onMouseLeave = () => {
+    setHovering(false);
+    setCurrentItem(null);
+  };
+
+  const contentImages = items.map((item) => {
     const image = isFilled.image(item.data.hover_image)
       ? item.data.hover_image
       : fallbackItemImage;
-
     return asImageSrc(image, {
       fit: "crop",
       w: 220,
       h: 320,
-      exp: -1,
+      exp: -10,
     });
   });
 
-  const onMouseEnter = (idx: number) => {
-    setCurrentItem(idx);
-  };
-
-  const onMouseLeave = () => {
-    setCurrentItem(null);
-  };
+  // Preload images
+  useEffect(() => {
+    contentImages.forEach((url) => {
+      if (!url) return;
+      const img = new Image();
+      img.src = url;
+    });
+  }, [contentImages]);
 
   return (
-    <div ref={component}>
-      <ul className="grid border-b border-b-slate-100">
-        {items.map((el, idx) => {
-          return (
-            <>
-              {isFilled.keyText(el.data.title) && (
-                <li
-                  key={idx}
-                  className="list-item opacity-0f"
-                  onMouseEnter={() => onMouseEnter(idx)}
-                  onMouseLeave={onMouseLeave}
-                >
-                  <Link
-                    href={urlPrefixes + "/" + el.uid}
-                    className="flex flex-col justify-between border-t border-t-slate-100 py-10 text-slate-200 md:flex-row"
-                    aria-label={el.data.title}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-bold">
-                        {el.data.title}
-                      </span>
-                      <div className="flex gap-3 text-yellow-400 text-lg font-bold">
-                        {el.tags.map((tag, idx) => {
-                          return <span key={idx}>{tag}</span>;
-                        })}
-                      </div>
-                    </div>
-                    <span className="ml-auto flex items-center gap-2 text-xl font-medium md:ml-0">
-                      {viewMoreText} <MdArrowOutward />
+    <>
+      <ul
+        ref={component}
+        className="grid border-b border-b-slate-100"
+        onMouseLeave={onMouseLeave}
+      >
+        {items.map((post, index) => (
+          <li
+            key={index}
+            ref={(el) => {itemsRef.current[index] = el}}
+            onMouseEnter={() => onMouseEnter(index)}
+            className="list-item opacity-0"
+          >
+            <a
+              href={`${urlPrefix}/${post.uid}`}
+              className="flex flex-col justify-between border-t border-t-slate-100 py-10  text-slate-200 md:flex-row "
+              aria-label={post.data.title || ""}
+            >
+              <div className="flex flex-col">
+                <span className="text-3xl font-bold">{post.data.title}</span>
+                <div className="flex gap-3 text-yellow-400">
+                  {post.tags.map((tag, index) => (
+                    <span key={index} className="text-lg font-bold">
+                      {tag}
                     </span>
-                  </Link>
-                </li>
-              )}
-            </>
-          );
-        })}
+                  ))}
+                </div>
+              </div>
+              <span className="ml-auto flex items-center gap-2 text-xl font-medium md:ml-0">
+                {viewMoreText} <MdArrowOutward />
+              </span>
+            </a>
+          </li>
+        ))}
+
+        {/* Hover element */}
+        <div
+          className="hover-reveal pointer-events-none absolute left-0 top-0 -z-10 h-[320px] w-[220px] rounded-lg bg-cover bg-center opacity-0 transition-[background] duration-300"
+          style={{
+            backgroundImage:
+              currentItem !== null ? `url(${contentImages[currentItem]})` : "",
+          }}
+          ref={revealRef}
+        ></div>
       </ul>
-
-      {/* Hover Element */}
-      <div
-        ref={revealRef}
-        className="hover-reveal pointer-events-none absolute left-0 top-0 -z-10
-      h-[320px] w-[220px] rounded-lg bg-over bg-center opacity-0f transition-[background] duration-300"
-        style={{
-          backgroundImage:
-            currentItem !== null ? `url(${contentImages[currentItem]})` : "",
-        }}
-      ></div>
-    </div>
+    </>
   );
-};
-
-export default ContentList;
+}
