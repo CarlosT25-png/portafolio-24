@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { Content } from "@prismicio/client";
 import { SliceComponentProps } from "@prismicio/react";
 import { MdCircle } from "react-icons/md";
@@ -22,12 +22,12 @@ gsap.registerPlugin(ScrollTrigger)
 const TechList = ({ slice }: TechListProps): JSX.Element => {
   const component = useRef(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let ctx = gsap.context(() => {
 
       let tl = gsap.timeline({
         scrollTrigger: {
-          trigger: component.current,
+          pin: true,
           start: "top bottom",
           end: "bottom top",
           scrub: 4
@@ -54,6 +54,7 @@ const TechList = ({ slice }: TechListProps): JSX.Element => {
     <section
       data-slice-type={slice.slice_type}
       data-slice-variation={slice.variation}
+      className="wrapper overflow-hidden"
       ref={component}
     >
       <Bounded as='div'>
@@ -69,7 +70,7 @@ const TechList = ({ slice }: TechListProps): JSX.Element => {
             {Array.from({ length: 15 }, (_, idx) => (
               <React.Fragment key={idx}>
                 <span
-                  className="texh-item text-8xl font-extrabold uppercase tracking-tighter"
+                  className="tech-item text-8xl font-extrabold uppercase tracking-tighter"
                   style={{
                     color: idx === 7 && tech_color ? tech_color : "inherit",
                   }}
