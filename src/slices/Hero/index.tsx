@@ -75,7 +75,7 @@ const Hero = ({ slice }: HeroProps): JSX.Element => {
         <div className="col-start-1 md:row-start-1">
           {/* Fix size text */}
           <h1
-            className="mb-8 text-[clamp(3rem,20vmin,14.5rem)] font-extrabold leading-none tracking-tighter break-normal"
+            className="mb-8 text-[5.5rem] md:text-[7rem] lg:text-[12rem] font-extrabold leading-none tracking-tighter break-normal"
             aria-label={
               slice.primary.first_name + " " + slice.primary.last_name
             }
