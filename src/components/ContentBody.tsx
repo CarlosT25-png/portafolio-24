@@ -39,7 +39,9 @@ export default async function ContentBody({ page }: { page: Content.BlogPostDocu
         {page.type === 'project' && (
           <div className="flex space-between items-center border-b border-slate-600 pb-4 mt-3">
             <p className="text-xl font-medium text-slate-300 leading-none">{formattedDate}</p>
-            <Button label={'View Project'} linkField={page.data.project_url} className="ml-auto" />
+            {isFilled.link(page.data.project_url) && (
+              <Button label={'View Project'} linkField={page.data.project_url} className="ml-auto" />
+            )}
           </div>
         )}
         
