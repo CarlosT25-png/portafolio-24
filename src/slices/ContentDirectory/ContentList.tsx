@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { asImageSrc, isFilled } from "@prismicio/client";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -31,6 +31,13 @@ export default function ContentList({
   const lastMousePos = useRef({ x: 0, y: 0 });
 
   const urlPrefix = contentType === "Blog" ? "/blog" : "/projects";
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const dateA = new Date(a.first_publication_date ?? 0).getTime();
+      const dateB = new Date(b.first_publication_date ?? 0).getTime();
+      return dateB - dateA;
+    });
+  }, [items]);
 
   useEffect(() => {
     // Animate list-items in with a stagger
@@ -111,7 +118,7 @@ export default function ContentList({
     setCurrentItem(null);
   };
 
-  const contentImages = items.map((item) => {
+  const contentImages = sortedItems.map((item) => {
     const image = isFilled.image(item.data.hover_image)
       ? item.data.hover_image
       : fallbackItemImage;
@@ -139,7 +146,7 @@ export default function ContentList({
         className="grid border-b border-b-slate-100"
         onMouseLeave={onMouseLeave}
       >
-        {items.map((post, index) => (
+        {sortedItems.map((post, index) => (
           <li
             key={index}
             ref={(el) => {itemsRef.current[index] = el}}
