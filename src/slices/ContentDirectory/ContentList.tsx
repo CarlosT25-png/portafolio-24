@@ -33,8 +33,8 @@ export default function ContentList({
   const urlPrefix = contentType === "Blog" ? "/blog" : "/projects";
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
-      const dateA = new Date(a.first_publication_date ?? 0).getTime();
-      const dateB = new Date(b.first_publication_date ?? 0).getTime();
+      const dateA = new Date(a.data.date_posted ?? 0).getTime();
+      const dateB = new Date(b.data.date_posted ?? 0).getTime();
       return dateB - dateA;
     });
   }, [items]);
