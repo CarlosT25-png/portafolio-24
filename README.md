@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Portfolio site
 
-## Getting Started
+Personal portfolio built with **Next.js 14** (App Router) and **Prismic** as the headless CMS. Content is modeled as **slices** and composed on the homepage and other document types; the UI uses **Tailwind CSS**, **GSAP** for motion, and **React Three Fiber** / **Three.js** for 3D elements.
 
-First, run the development server:
+## Stack
+
+- [Next.js 14](https://nextjs.org/) — React, App Router, API routes for Prismic preview and revalidation
+- [Prismic](https://prismic.io/) — `@prismicio/client`, `@prismicio/next`, `@prismicio/react`
+- [Slice Machine](https://prismic.io/docs/slice-machine) — local slice development and types
+- [Tailwind CSS](https://tailwindcss.com/) — styling
+- [GSAP](https://gsap.com/) — animations
+- [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction) & [Three.js](https://threejs.org/) — 3D graphics
+
+## Prerequisites
+
+- **Node.js** (LTS recommended)
+- A **Prismic repository** linked to this project. The repository name used at runtime comes from `NEXT_PUBLIC_PRISMIC_ENVIRONMENT` or from `repositoryName` in `slicemachine.config.json` (whichever you configure for your fork).
+
+## Environment
+
+Do **not** commit API keys, access tokens, webhook secrets, or `.env.local` (keep those only on your machine and in your host’s secret store).
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_PRISMIC_ENVIRONMENT` | No | Prismic repository name override. If unset, the client uses `repositoryName` from `slicemachine.config.json`. |
+
+Example (values are placeholders):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_PRISMIC_ENVIRONMENT=your-prismic-repo-name
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Install dependencies and run the dev server:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000).
 
-To learn more about Next.js, take a look at the following resources:
+### Other scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Command | Description |
+|---------|-------------|
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
+| `npm run slicemachine` | Start [Slice Machine](https://prismic.io/docs/slice-machine) UI for editing slice models |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Content & routes
 
-## Deploy on Vercel
+- **Homepage** — Prismic singleton `homepage`; rendered with `SliceZone` in `src/app/page.tsx`.
+- **Generic pages** — `src/app/[uid]/page.tsx` for documents of type `page`.
+- **Blog** — `src/app/blog/[uid]/page.tsx`
+- **Projects** — `src/app/projects/[uid]/page.tsx`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Route resolvers for Prismic URLs live in `src/prismicio.ts`. Update the `routes` array there if you add document types or change URL patterns.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+**Slices** live under `src/slices/` (Hero, Biography, Experience, TechList, etc.). Types are generated into `prismicio-types.d.ts` when you use Slice Machine.
+
+**Slice Simulator** — [http://localhost:3000/slice-simulator](http://localhost:3000/slice-simulator) (dev) for previewing slices in isolation.
+
+## Prismic preview & revalidation
+
+- Preview is enabled via `PrismicPreview` in `src/app/layout.tsx` and the preview API route under `src/app/api/preview/`.
+- On-demand revalidation uses the `prismic` cache tag (`src/app/api/revalidate/route.ts`). If you expose that URL on the public internet, **protect it** (for example verify a shared secret from your webhook or restrict invocations to your host’s trusted paths)—otherwise anyone could trigger revalidation.
+
+## Deploy
+
+The app is a standard Next.js deployment (e.g. [Vercel](https://vercel.com/docs)). Set environment variables only in the hosting provider’s dashboard (not in the repo). Configure Prismic preview URLs and any revalidate webhook to match your production domain.
